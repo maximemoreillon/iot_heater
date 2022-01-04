@@ -6,37 +6,35 @@ void io_setup(){
   pinMode(LED_PIN, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);
 
-  // Initial state
-  if(strcmp(relay_state,"ON") == 0) {
-    digitalWrite(LED_PIN, HIGH);
-    digitalWrite(RELAY_PIN, HIGH);
-  }
-  else {
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(RELAY_PIN, LOW);
-  }
+  // Initially OFF
+  digitalWrite(LED_PIN, LOW);
+  digitalWrite(RELAY_PIN, LOW);
 }
 
 void turn_on(){
   Serial.println("[IO] Turning relay ON");
   digitalWrite(RELAY_PIN, HIGH);
   digitalWrite(LED_PIN, HIGH);
-  relay_state = "ON";
-  MQTT_publish_state();
+  iot_kernel.device_state = "on";
+  iot_kernel.mqtt_publish_state();
 }
 
 void turn_off(){
   Serial.println("[IO] Turning relay OFF");
   digitalWrite(RELAY_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
-  relay_state = "OFF";
-  MQTT_publish_state();
+  iot_kernel.device_state = "off";
+  iot_kernel.mqtt_publish_state();
 }
 
-void toggle_state(){
+void toggle(){
   Serial.println(F("[IO] Toggling state"));
-  if(strcmp(relay_state,"OFF") == 0) turn_on();
-  else if(strcmp(relay_state,"ON") == 0) turn_off();
+  if(iot_kernel.device_state == "off"){
+    turn_on();
+  }
+  else if(iot_kernel.device_state == "on"){
+    turn_off();
+  }
 }
 
 void read_button() {
@@ -67,20 +65,8 @@ void read_button() {
       // IF the button has changed to being pressed for long enough
       if(button_state == LOW) {
         Serial.println("[IO] Button pressed");
-        toggle_state();
+        toggle();
       }
     }
-  }
-}
-
-void read_temperature() {
-  static long lastPublish;
-
-  // Periodic publish of temperature
-  if (millis() - lastPublish > TEMPERATURE_PUBLISH_PERIOD){
-    lastPublish = millis();
-    //sensors.requestTemperatures(); // Send the command to get temperatures
-    //float temperature = sensors.getTempCByIndex(0);
-    //MQTT_client.publish(MQTT_TEMPERATURE_STATUS_TOPIC, MQTT_QOS, MQTT_RETAIN, String(temperature).c_str());
   }
 }
